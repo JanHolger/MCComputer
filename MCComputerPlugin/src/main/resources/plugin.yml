@@ -1,0 +1,6 @@
+name: MCComputer
+version: 1.0
+main: eu.bebendorf.mccomputer.MCComputer
+depend: [MCScreen]
+commands:
+  computer:
