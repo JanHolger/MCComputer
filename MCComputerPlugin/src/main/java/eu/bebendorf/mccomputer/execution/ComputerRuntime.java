@@ -43,6 +43,7 @@ public class ComputerRuntime {
             biosAPI.registerJavaMethod(bios, "clock", "clock", new Class[0]);
             biosAPI.registerJavaMethod(bios, "getComponents", "getComponents", new Class[0]);
             biosAPI.registerJavaMethod(bios, "getComponent", "getComponent", new Class[]{String.class});
+            biosAPI.registerJavaMethod(bios, "getComponentsByType", "getComponentsByType", new Class[]{String.class});
             biosAPI.registerJavaMethod(bios, "exec", "exec", new Class[]{String.class});
             biosAPI.registerJavaMethod(System.out, "println", "debug", new Class[]{String.class});
             runtime.add("BIOS", biosAPI);
@@ -108,6 +109,17 @@ public class ComputerRuntime {
             for(ComputerComponent component : computer.getComponents()){
                 ComputerComponentImplementation implementation = (ComputerComponentImplementation) component;
                 array.push(implementation.makeV8(runtime));
+            }
+            return array;
+        }
+        public V8Array getComponentsByType(String type){
+            V8Array array = new V8Array(runtime);
+            runtime.registerResource(array);
+            for(ComputerComponent component : computer.getComponents()){
+                if(component.getComponentName().equals(type)){
+                    ComputerComponentImplementation implementation = (ComputerComponentImplementation) component;
+                    array.push(implementation.makeV8(runtime));
+                }
             }
             return array;
         }
