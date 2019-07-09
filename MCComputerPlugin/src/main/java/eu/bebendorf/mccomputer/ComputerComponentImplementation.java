@@ -1,5 +1,7 @@
 package eu.bebendorf.mccomputer;
 
+import com.eclipsesource.v8.V8;
+import com.eclipsesource.v8.V8Object;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -66,6 +68,12 @@ public abstract class ComputerComponentImplementation implements ComputerCompone
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    public V8Object makeV8(V8 runtime){
+        V8Object object = new V8Object(runtime);
+        object.add("address", getAddress().toString());
+        object.add("type", getComponentName());
+        return object;
     }
     public static ComputerComponentImplementation load(UUID address){
         try {

@@ -5,7 +5,9 @@ import eu.bebendorf.mccomputer.ComputerImplementation;
 import eu.bebendorf.mccomputer.MCComputer;
 import eu.bebendorf.mccomputer.api.Computer;
 import eu.bebendorf.mccomputer.api.ComputerComponent;
+import eu.bebendorf.mccomputer.helper.ItemBuilder;
 import lombok.AllArgsConstructor;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -13,6 +15,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.UUID;
@@ -70,7 +74,15 @@ public class ComputerBlockListener implements Listener {
                 return;
             }
         }
-        MCComputer.getInstance().sendPrefixed(e.getPlayer(), "Currently there is not interaction menu!");
+        Inventory gui = Bukkit.createInventory(null, 45, "§cComputer §8(§7"+computer.getId()+"§8)");
+        ItemStack empty = new ItemBuilder(Material.STAINED_GLASS_PANE, 1, 8).setName(" ").build();
+        for(int i=0; i<gui.getSize(); i++)
+            gui.setItem(i, empty);
+        gui.setItem(13, new ItemBuilder(Material.PAPER, 1).setName("§7Status").setLore(computer.isRunning() ? "§aRunning" : "§cShutdown").build());
+        gui.setItem(28, new ItemBuilder(Material.INK_SACK, 1, 10).setName("§aBoot").build());
+        gui.setItem(31, new ItemBuilder(Material.INK_SACK, 1, 14).setName("§eShutdown").build());
+        gui.setItem(34, new ItemBuilder(Material.INK_SACK, 1, 1).setName("§cKill").build());
+        e.getPlayer().openInventory(gui);
     }
 
 }

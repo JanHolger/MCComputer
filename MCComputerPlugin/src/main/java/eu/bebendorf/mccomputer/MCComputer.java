@@ -4,6 +4,7 @@ import eu.bebendorf.mccomputer.api.ComputerAPI;
 import eu.bebendorf.mccomputer.api.ComputerAPIPlugin;
 import eu.bebendorf.mccomputer.command.ComputerCommand;
 import eu.bebendorf.mccomputer.listener.ComputerBlockListener;
+import eu.bebendorf.mccomputer.listener.ComputerGUIListener;
 import eu.bebendorf.mccomputer.listener.ComputerPlaceListener;
 import eu.bebendorf.mccomputer.listener.ScreenListener;
 import eu.bebendorf.mcscreen.api.ScreenAPI;
@@ -37,6 +38,7 @@ public class MCComputer extends JavaPlugin implements ComputerAPIPlugin {
         getCommand("computer").setExecutor(new ComputerCommand(this));
         Bukkit.getPluginManager().registerEvents(new ComputerBlockListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ComputerPlaceListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new ComputerGUIListener(this), this);
         ScreenAPI.getInstance().addListener(new ScreenListener(this));
         computerManager = new ComputerAPIImplementation(new File(getDataFolder(), "computer.json"));
     }

@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import eu.bebendorf.mccomputer.api.Computer;
 import eu.bebendorf.mccomputer.api.ComputerComponent;
+import eu.bebendorf.mccomputer.execution.ComputerRuntime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
@@ -25,6 +26,7 @@ public class ComputerImplementation implements Computer {
     @Getter
     Location location;
     List<UUID> components = new ArrayList<>();
+    ComputerRuntime runtime = null;
 
     public ComputerImplementation(int id, Location location){
         this.id = id;
@@ -64,19 +66,28 @@ public class ComputerImplementation implements Computer {
     }
 
     public boolean isRunning(){
-        return false;
+        if(runtime == null)
+            return false;
+        return runtime.isRunning();
     }
 
     public void kill(){
-
+        if(runtime == null)
+            return;
+        runtime.kill();
     }
 
     public void shutdown(){
-
+        if(runtime == null)
+            return;
+        runtime.event(ComputerRuntime.Event.SHUTDOWN).dispatch();
     }
 
     public void boot(){
-
+        if(runtime == null){
+            runtime = new ComputerRuntime(this);
+        }
+        runtime.start();
     }
 
     public boolean removalCheck(Player player){
