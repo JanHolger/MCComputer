@@ -56,6 +56,7 @@ public class ComputerRuntime {
                     ex.printStackTrace();
             }
             runtime.release();
+            eventQueue.clear();
             runtime = null;
         }).start();
     }
