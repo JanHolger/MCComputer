@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import eu.bebendorf.mccomputer.api.Computer;
 import eu.bebendorf.mccomputer.api.ComputerComponent;
+import eu.bebendorf.mccomputer.api.execution.RuntimeEvent;
+import eu.bebendorf.mccomputer.api.execution.RuntimeEventBuilder;
 import eu.bebendorf.mccomputer.execution.ComputerRuntime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -80,7 +82,7 @@ public class ComputerImplementation implements Computer {
     public void shutdown(){
         if(runtime == null)
             return;
-        runtime.event(ComputerRuntime.Event.SHUTDOWN).dispatch();
+        runtime.event(RuntimeEvent.SHUTDOWN).dispatch();
     }
 
     public void boot(){
@@ -88,6 +90,14 @@ public class ComputerImplementation implements Computer {
             runtime = new ComputerRuntime(this);
         }
         runtime.start();
+    }
+
+    public RuntimeEventBuilder event(String eventName){
+        return runtime.event(eventName);
+    }
+
+    public RuntimeEventBuilder event(RuntimeEvent event){
+        return event(event.getValue());
     }
 
     public boolean removalCheck(Player player){

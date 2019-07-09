@@ -1,5 +1,7 @@
 package eu.bebendorf.mccomputer.api;
 
+import eu.bebendorf.mccomputer.api.execution.RuntimeEvent;
+import eu.bebendorf.mccomputer.api.execution.RuntimeEventBuilder;
 import org.bukkit.Location;
 
 import java.util.List;
@@ -15,5 +17,9 @@ public interface Computer {
     void kill();
     void boot();
     void shutdown();
+    RuntimeEventBuilder event(String eventName);
+    default RuntimeEventBuilder event(RuntimeEvent event){
+        return event(event.getValue());
+    }
 
 }

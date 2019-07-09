@@ -97,6 +97,7 @@ public class ComputerAPIImplementation implements ComputerAPI {
                 dropLocation.getWorld().dropItem(dropLocation, component.getItem());
             }
         }
+        computer.shutdown();
         computer.kill();
         computers.remove(computer);
         save(saveFile);

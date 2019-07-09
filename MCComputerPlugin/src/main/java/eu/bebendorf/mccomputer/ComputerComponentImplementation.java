@@ -71,6 +71,7 @@ public abstract class ComputerComponentImplementation implements ComputerCompone
     }
     public V8Object makeV8(V8 runtime){
         V8Object object = new V8Object(runtime);
+        runtime.registerResource(object);
         object.add("address", getAddress().toString());
         object.add("type", getComponentName());
         return object;

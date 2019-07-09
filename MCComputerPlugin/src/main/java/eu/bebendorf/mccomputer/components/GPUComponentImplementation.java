@@ -96,6 +96,7 @@ public class GPUComponentImplementation extends ComputerComponentImplementation 
         private V8 runtime;
         public V8Array getScreens(){
             V8Array array = new V8Array(runtime);
+            runtime.registerResource(array);
             for(Screen screen : GPUComponentImplementation.this.getScreens()){
                 array.push(makeScreen(screen));
             }
@@ -109,6 +110,7 @@ public class GPUComponentImplementation extends ComputerComponentImplementation 
         }
         private V8Object makeScreen(Screen screen){
             V8Object object = new V8Object(runtime);
+            runtime.registerResource(object);
             V8ScreenAPI screenAPI = new V8ScreenAPI(screen);
             object.add("id", screen.getId());
             object.add("width", screen.getPixelWidth());
