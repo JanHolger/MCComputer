@@ -20,6 +20,8 @@ public class GPUComponentImplementation extends ComputerComponentImplementation 
 
     private List<Integer> screens = new ArrayList<>();
     private Map<Integer, ImageWrapper> images = new HashMap<>();
+    private Map<Integer, ImageWrapper> resources = new HashMap<>();
+    private int NEXT_RESOURCE_ID = 0;
 
     public GPUComponentImplementation() {
         super(null);
@@ -88,6 +90,7 @@ public class GPUComponentImplementation extends ComputerComponentImplementation 
         V8GPUAPI gpuApi = new V8GPUAPI(runtime);
         object.registerJavaMethod(gpuApi, "getScreens", "getScreens", new Class[0]);
         object.registerJavaMethod(gpuApi, "getScreen", "getScreen", new Class[]{int.class});
+        object.add("gl", gpuApi.getGLAPI());
         return object;
     }
 
@@ -108,6 +111,18 @@ public class GPUComponentImplementation extends ComputerComponentImplementation 
                 return null;
             return makeScreen(screen);
         }
+        public V8Object getGLAPI(){
+            V8Object glAPIObject = new V8Object(runtime);
+            runtime.registerResource(glAPIObject);
+            V8GLAPI glAPI = new V8GLAPI();
+            glAPIObject.registerJavaMethod(glAPI, "create", "create", new Class[]{int.class,int.class});
+            glAPIObject.registerJavaMethod(glAPI, "destroy", "destroy", new Class[]{int.class});
+            glAPIObject.registerJavaMethod(glAPI, "setPixel", "setPixel", new Class[]{int.class,int.class,int.class,int.class,int.class,int.class,int.class});
+            glAPIObject.registerJavaMethod(glAPI, "fillRect", "fillRect", new Class[]{int.class,int.class,int.class,int.class,int.class,int.class,int.class,int.class,int.class});
+            glAPIObject.registerJavaMethod(glAPI, "fillCircle", "fillCircle", new Class[]{int.class,int.class,int.class,int.class,int.class,int.class,int.class,int.class});
+            glAPIObject.registerJavaMethod(glAPI, "drawResource", "drawResource", new Class[]{int.class,int.class,int.class,int.class});
+            return glAPIObject;
+        }
         private V8Object makeScreen(Screen screen){
             V8Object object = new V8Object(runtime);
             runtime.registerResource(object);
@@ -116,22 +131,38 @@ public class GPUComponentImplementation extends ComputerComponentImplementation 
             object.add("width", screen.getPixelWidth());
             object.add("height", screen.getPixelHeight());
             object.registerJavaMethod(screenAPI, "refresh", "refresh", new Class[]{});
+            object.registerJavaMethod(screenAPI, "drawResource", "drawResource", new Class[]{int.class,int.class,int.class});
             object.registerJavaMethod(screenAPI, "setPixel", "setPixel", new Class[]{int.class,int.class,int.class,int.class,int.class,int.class});
-            object.registerJavaMethod(screenAPI, "fillCircle", "fillCircle", new Class[]{int.class,int.class,int.class,int.class,int.class,int.class,int.class});
             object.registerJavaMethod(screenAPI, "fillRect", "fillRect", new Class[]{int.class,int.class,int.class,int.class,int.class,int.class,int.class,int.class});
+            object.registerJavaMethod(screenAPI, "fillCircle", "fillCircle", new Class[]{int.class,int.class,int.class,int.class,int.class,int.class,int.class});
             return object;
         }
         @AllArgsConstructor
         public class V8ScreenAPI {
             private Screen screen;
+            public void drawResource(int xOffset, int yOffset, int otherResource){
+                if(!resources.containsKey(otherResource))
+                    return;
+                ImageWrapper image = getImage();
+                ImageWrapper other = resources.get(otherResource);
+                for(int x = 0; x < other.getWidth(); x++){
+                    for(int y = 0; y < other.getHeight(); y++){
+                        ImageWrapper.WrappedPixel pixel = image.getPixel(xOffset + x, yOffset + y);
+                        if(pixel != null){
+                            pixel.setRGBA(other.getPixel(x, y).getRGBA());
+                        }
+                    }
+                }
+            }
             public void setPixel(int x, int y, int r, int g, int b, int a){
-                ImageWrapper.WrappedPixel pixel = getImage().getPixel(x, y);
+                ImageWrapper image = getImage();
+                ImageWrapper.WrappedPixel pixel = image.getPixel(x, y);
                 if(pixel != null){
                     pixel.setRGBA(r, g, b, a);
                 }
             }
             public void fillRect(int x, int y, int width, int height, int r, int g, int b, int a){
-                ImageWrapper image = images.get(screen.getId());
+                ImageWrapper image = getImage();
                 for(int xW = 0; xW < width; xW++){
                     for(int yW = 0; yW < height; yW++){
                         ImageWrapper.WrappedPixel pixel = image.getPixel(x+xW, y+yW);
@@ -142,7 +173,7 @@ public class GPUComponentImplementation extends ComputerComponentImplementation 
                 }
             }
             public void fillCircle(int x, int y, int radius, int r, int g, int b, int a){
-                ImageWrapper image = images.get(screen.getId());
+                ImageWrapper image = getImage();
                 for(int xW = x-radius; xW <= x+radius; xW++){
                     for(int yW = y-radius; yW < y+radius; yW++){
                         double d = Math.sqrt(Math.pow(Math.max(x, xW)-Math.min(x, xW),2)+Math.pow(Math.max(y, yW)-Math.min(y, yW),2));
@@ -166,7 +197,72 @@ public class GPUComponentImplementation extends ComputerComponentImplementation 
                 return image;
             }
         }
-
+        public class V8GLAPI {
+            public int create(int width, int height){
+                int id = NEXT_RESOURCE_ID;
+                NEXT_RESOURCE_ID++;
+                resources.put(id, new ImageWrapper(width, height));
+                return id;
+            }
+            public void destroy(int resource){
+                if(resources.containsKey(resource))
+                    resources.remove(resource);
+            }
+            public void setPixel(int resource, int x, int y, int r, int g, int b, int a){
+                if(!resources.containsKey(resource))
+                    return;
+                ImageWrapper image = resources.get(resource);
+                ImageWrapper.WrappedPixel pixel = image.getPixel(x, y);
+                if(pixel != null){
+                    pixel.setRGBA(r, g, b, a);
+                }
+            }
+            public void fillRect(int resource, int x, int y, int width, int height, int r, int g, int b, int a){
+                if(!resources.containsKey(resource))
+                    return;
+                ImageWrapper image = resources.get(resource);
+                for(int xW = 0; xW < width; xW++){
+                    for(int yW = 0; yW < height; yW++){
+                        ImageWrapper.WrappedPixel pixel = image.getPixel(x+xW, y+yW);
+                        if(pixel != null){
+                            pixel.setRGBA(r, g, b, a);
+                        }
+                    }
+                }
+            }
+            public void fillCircle(int resource, int x, int y, int radius, int r, int g, int b, int a){
+                if(!resources.containsKey(resource))
+                    return;
+                ImageWrapper image = resources.get(resource);
+                for(int xW = x-radius; xW <= x+radius; xW++){
+                    for(int yW = y-radius; yW < y+radius; yW++){
+                        double d = Math.sqrt(Math.pow(Math.max(x, xW)-Math.min(x, xW),2)+Math.pow(Math.max(y, yW)-Math.min(y, yW),2));
+                        if(d <= radius){
+                            ImageWrapper.WrappedPixel pixel = image.getPixel(xW, yW);
+                            if(pixel != null){
+                                pixel.setRGBA(r, g, b, a);
+                            }
+                        }
+                    }
+                }
+            }
+            public void drawResource(int resource, int xOffset, int yOffset, int otherResource){
+                if(!resources.containsKey(resource))
+                    return;
+                if(!resources.containsKey(otherResource))
+                    return;
+                ImageWrapper image = resources.get(resource);
+                ImageWrapper other = resources.get(otherResource);
+                for(int x = 0; x < other.getWidth(); x++){
+                    for(int y = 0; y < other.getHeight(); y++){
+                        ImageWrapper.WrappedPixel pixel = image.getPixel(xOffset + x, yOffset + y);
+                        if(pixel != null){
+                            pixel.setRGBA(other.getPixel(x, y).getRGBA());
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }
