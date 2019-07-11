@@ -6,7 +6,6 @@ import eu.bebendorf.mccomputer.MCComputer;
 import eu.bebendorf.mccomputer.api.Computer;
 import eu.bebendorf.mccomputer.api.components.FSComponent;
 import eu.bebendorf.mccomputer.api.components.GPUComponent;
-import eu.bebendorf.mccomputer.components.GPUComponentImplementation;
 import lombok.AllArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

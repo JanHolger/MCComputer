@@ -2,12 +2,17 @@ package eu.bebendorf.mccomputer.execution;
 
 import com.eclipsesource.v8.*;
 import eu.bebendorf.mccomputer.ComputerComponentImplementation;
+import eu.bebendorf.mccomputer.PlayerAPI;
 import eu.bebendorf.mccomputer.api.Computer;
 import eu.bebendorf.mccomputer.api.ComputerComponent;
 import eu.bebendorf.mccomputer.api.execution.RuntimeEvent;
 import eu.bebendorf.mccomputer.api.execution.RuntimeEventBuilder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -38,7 +43,9 @@ public class ComputerRuntime {
             V8BiosAPI bios = new V8BiosAPI();
             biosAPI.registerJavaMethod(bios, "pull", "pull", new Class[0]);
             biosAPI.registerJavaMethod(bios, "dispatch", "dispatch", new Class[]{String.class, V8Object.class});
+            biosAPI.registerJavaMethod(bios, "getPlayer", "getPlayer", new Class[]{String.class});
             biosAPI.registerJavaMethod(bios, "sleep", "sleep", new Class[]{long.class});
+            biosAPI.registerJavaMethod(bios, "date", "date", new Class[]{int.class});
             biosAPI.registerJavaMethod(bios, "time", "time", new Class[0]);
             biosAPI.registerJavaMethod(bios, "clock", "clock", new Class[0]);
             biosAPI.registerJavaMethod(bios, "getComponents", "getComponents", new Class[0]);
@@ -93,6 +100,35 @@ public class ComputerRuntime {
             }
             event.dispatch();
         }
+        public V8Object date(int time){
+            V8Object object = new V8Object(runtime);
+            runtime.registerResource(object);
+            DateAPI dateAPI = new DateAPI(time);
+            object.registerJavaMethod(dateAPI, "getTime", "getTime", new Class[0]);
+            object.registerJavaMethod(dateAPI, "getYear", "getYear", new Class[0]);
+            object.registerJavaMethod(dateAPI, "getDay", "getDay", new Class[0]);
+            object.registerJavaMethod(dateAPI, "getDayInYear", "getDayInYear", new Class[0]);
+            object.registerJavaMethod(dateAPI, "getMonth", "getMonth", new Class[0]);
+            object.registerJavaMethod(dateAPI, "getHour", "getHour", new Class[0]);
+            object.registerJavaMethod(dateAPI, "getMinute", "getMinute", new Class[0]);
+            object.registerJavaMethod(dateAPI, "getSecond", "getSecond", new Class[0]);
+            object.registerJavaMethod(dateAPI, "format", "format", new Class[]{String.class});
+            return object;
+        }
+        public V8Object getPlayer(String uuidString){
+            UUID uuid = UUID.fromString(uuidString);
+            Player player = Bukkit.getPlayer(uuid);
+            if(player == null)
+                return null;
+            PlayerAPI playerAPI = new PlayerAPI(player);
+            V8Object object = new V8Object(runtime);
+            runtime.registerResource(object);
+            object.add("name", player.getName());
+            object.add("uuid", player.getUniqueId().toString());
+            object.registerJavaMethod(playerAPI, "sendMessage", "sendMessage", new Class[]{String.class});
+            object.registerJavaMethod(playerAPI, "sendChat", "sendChat", new Class[]{int.class,String.class});
+            return object;
+        }
         public void sleep(long millis){
             try {
                 Thread.sleep(millis);
@@ -134,6 +170,42 @@ public class ComputerRuntime {
         }
         public void exec(String script){
             runtime.executeVoidScript(script);
+        }
+
+        @AllArgsConstructor
+        public class DateAPI {
+            private Calendar calendar;
+            public DateAPI(int time){
+                calendar = new GregorianCalendar();
+                calendar.setTime(new Date(time * 1000));
+            }
+            public int getTime(){
+                return (int)(calendar.getTimeInMillis() / 1000L);
+            }
+            public int getYear(){
+                return calendar.get(Calendar.YEAR);
+            }
+            public int getDay(){
+                return calendar.get(Calendar.DAY_OF_MONTH);
+            }
+            public int getDayInYear(){
+                return calendar.get(Calendar.DAY_OF_YEAR);
+            }
+            public int getMonth(){
+                return calendar.get(Calendar.MONTH);
+            }
+            public int getHour(){
+                return calendar.get(Calendar.HOUR);
+            }
+            public int getMinute(){
+                return calendar.get(Calendar.MINUTE);
+            }
+            public int getSecond(){
+                return calendar.get(Calendar.SECOND);
+            }
+            public String format(String format){
+                return new SimpleDateFormat(format).format(calendar.getTime());
+            }
         }
     }
 

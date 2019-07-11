@@ -3,6 +3,7 @@ package eu.bebendorf.mccomputer;
 import eu.bebendorf.mccomputer.api.ComputerAPI;
 import eu.bebendorf.mccomputer.api.ComputerAPIPlugin;
 import eu.bebendorf.mccomputer.command.ComputerCommand;
+import eu.bebendorf.mccomputer.j2v8fix.V8Loader;
 import eu.bebendorf.mccomputer.listener.ComputerBlockListener;
 import eu.bebendorf.mccomputer.listener.ComputerGUIListener;
 import eu.bebendorf.mccomputer.listener.ComputerPlaceListener;
@@ -31,6 +32,11 @@ public class MCComputer extends JavaPlugin implements ComputerAPIPlugin {
         instance = this;
         if(!getDataFolder().exists())
             getDataFolder().mkdir();
+        if(!V8Loader.load()){
+            System.out.println("Couldn't load J2V8! Please make sure 'plugins/MCComputer/j2v8.jar' is present.");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
         if(!getHostFSFolder().exists())
             getHostFSFolder().mkdir();
         if(!getComponentFolder().exists())

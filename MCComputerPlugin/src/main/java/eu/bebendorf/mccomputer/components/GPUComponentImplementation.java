@@ -8,6 +8,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import eu.bebendorf.mccomputer.ComputerComponentImplementation;
+import eu.bebendorf.mccomputer.FontRenderer;
+import eu.bebendorf.mccomputer.IconRenderer;
+import eu.bebendorf.mccomputer.MCComputer;
+import eu.bebendorf.mccomputer.api.ComputerComponent;
 import eu.bebendorf.mccomputer.api.components.GPUComponent;
 import eu.bebendorf.mcscreen.api.Screen;
 import eu.bebendorf.mcscreen.api.ScreenAPI;
@@ -117,6 +121,11 @@ public class GPUComponentImplementation extends ComputerComponentImplementation 
             V8GLAPI glAPI = new V8GLAPI();
             glAPIObject.registerJavaMethod(glAPI, "create", "create", new Class[]{int.class,int.class});
             glAPIObject.registerJavaMethod(glAPI, "destroy", "destroy", new Class[]{int.class});
+            glAPIObject.registerJavaMethod(glAPI, "load", "load", new Class[]{String.class,String.class});
+            glAPIObject.registerJavaMethod(glAPI, "save", "save", new Class[]{String.class,String.class,int.class});
+            glAPIObject.registerJavaMethod(glAPI, "createText", "createText", new Class[]{String.class,String.class,int.class,int.class,int.class,int.class});
+            glAPIObject.registerJavaMethod(glAPI, "createTrueTypeText", "createTrueTypeText", new Class[]{String.class,String.class,String.class,int.class,int.class,int.class,int.class});
+            glAPIObject.registerJavaMethod(glAPI, "createIcon", "createIcon", new Class[]{String.class,String.class,int.class,int.class,int.class,int.class});
             glAPIObject.registerJavaMethod(glAPI, "setPixel", "setPixel", new Class[]{int.class,int.class,int.class,int.class,int.class,int.class,int.class});
             glAPIObject.registerJavaMethod(glAPI, "fillRect", "fillRect", new Class[]{int.class,int.class,int.class,int.class,int.class,int.class,int.class,int.class,int.class});
             glAPIObject.registerJavaMethod(glAPI, "fillCircle", "fillCircle", new Class[]{int.class,int.class,int.class,int.class,int.class,int.class,int.class,int.class});
@@ -149,7 +158,9 @@ public class GPUComponentImplementation extends ComputerComponentImplementation 
                     for(int y = 0; y < other.getHeight(); y++){
                         ImageWrapper.WrappedPixel pixel = image.getPixel(xOffset + x, yOffset + y);
                         if(pixel != null){
-                            pixel.setRGBA(other.getPixel(x, y).getRGBA());
+                            if(other.getPixel(x, y).getAlpha() == 255){
+                                pixel.setRGBA(other.getPixel(x, y).getRGBA());
+                            }
                         }
                     }
                 }
@@ -204,9 +215,76 @@ public class GPUComponentImplementation extends ComputerComponentImplementation 
                 resources.put(id, new ImageWrapper(width, height));
                 return id;
             }
+            public int createText(String text, String font, int size, int r, int g, int b){
+                ImageWrapper wrapper = FontRenderer.render(text, font, size, r, g, b);
+                if(wrapper == null)
+                    return -1;
+                int id = NEXT_RESOURCE_ID;
+                NEXT_RESOURCE_ID++;
+                resources.put(id, wrapper);
+                return id;
+            }
+            public int createTrueTypeText(String text, String addressString, String fileName, int size, int r, int g, int b){
+                UUID address = UUID.fromString(addressString);
+                ComputerComponent component = MCComputer.getInstance().getComputerManager().getComponent(address);
+                if(component == null)
+                    return -1;
+                if(!(component instanceof FSComponentImplementation))
+                    return -1;
+                FSComponentImplementation fs = (FSComponentImplementation) component;
+                if(!fs.exists(fileName))
+                    return -1;
+                ImageWrapper wrapper = FontRenderer.render(text, fs.getFile(fileName), size, r, g, b);
+                if(wrapper == null)
+                    return -1;
+                int id = NEXT_RESOURCE_ID;
+                NEXT_RESOURCE_ID++;
+                resources.put(id, wrapper);
+                return id;
+            }
+            public int createIcon(String style, String icon, int size, int r, int g, int b){
+                ImageWrapper wrapper = IconRenderer.render(style, icon, size, r, g, b);
+                if(wrapper == null)
+                    return -1;
+                int id = NEXT_RESOURCE_ID;
+                NEXT_RESOURCE_ID++;
+                resources.put(id, wrapper);
+                return id;
+            }
             public void destroy(int resource){
                 if(resources.containsKey(resource))
                     resources.remove(resource);
+            }
+            public int load(String addressString, String fileName){
+                UUID address = UUID.fromString(addressString);
+                ComputerComponent component = MCComputer.getInstance().getComputerManager().getComponent(address);
+                if(component == null)
+                    return -1;
+                if(!(component instanceof FSComponentImplementation))
+                    return -1;
+                FSComponentImplementation fs = (FSComponentImplementation) component;
+                if(!fs.exists(fileName))
+                    return -1;
+                int id = NEXT_RESOURCE_ID;
+                NEXT_RESOURCE_ID++;
+                ImageWrapper wrapper = ImageWrapper.read(fs.getFile(fileName));
+                wrapper.forEach(pixel -> {
+                    pixel.setAlpha(pixel.getAlpha() == 0 ? 0 : 255);
+                });
+                resources.put(id, wrapper);
+                return id;
+            }
+            public void save(String addressString, String fileName, int resource){
+                if(!resources.containsKey(resource))
+                    return;
+                UUID address = UUID.fromString(addressString);
+                ComputerComponent component = MCComputer.getInstance().getComputerManager().getComponent(address);
+                if(component == null)
+                    return;
+                if(!(component instanceof FSComponentImplementation))
+                    return;
+                FSComponentImplementation fs = (FSComponentImplementation) component;
+                resources.get(resource).write(fs.getFile(fileName));
             }
             public void setPixel(int resource, int x, int y, int r, int g, int b, int a){
                 if(!resources.containsKey(resource))
@@ -257,7 +335,9 @@ public class GPUComponentImplementation extends ComputerComponentImplementation 
                     for(int y = 0; y < other.getHeight(); y++){
                         ImageWrapper.WrappedPixel pixel = image.getPixel(xOffset + x, yOffset + y);
                         if(pixel != null){
-                            pixel.setRGBA(other.getPixel(x, y).getRGBA());
+                            if(other.getPixel(x, y).getAlpha() == 255){
+                                pixel.setRGBA(other.getPixel(x, y).getRGBA());
+                            }
                         }
                     }
                 }

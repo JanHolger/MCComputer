@@ -17,7 +17,7 @@ public class FSComponentImplementation extends ComputerComponentImplementation i
         return new File(MCComputer.getHostFSFolder(), getAddress().toString());
     }
 
-    private File getFile(String file){
+    public File getFile(String file){
         return new File(getFSFolder(), file.startsWith("/") ? file.substring(1) : file);
     }
 
