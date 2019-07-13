@@ -11,6 +11,7 @@ import eu.bebendorf.mccomputer.api.components.FSComponent;
 import eu.bebendorf.mccomputer.api.components.GPUComponent;
 import eu.bebendorf.mccomputer.components.FSComponentImplementation;
 import eu.bebendorf.mccomputer.components.GPUComponentImplementation;
+import eu.bebendorf.mcscreen.api.Screen;
 import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -190,5 +191,22 @@ public class ComputerAPIImplementation implements ComputerAPI {
             e.printStackTrace();
         }
     }
+
+    public List<Computer> getComputers(Screen screen){
+        List<Computer> computers = new ArrayList<>();
+        for(Computer computer : MCComputer.getInstance().getComputerManager().getComputers()){
+            for(ComputerComponent component : computer.getComponents()){
+                if(component instanceof GPUComponentImplementation){
+                    GPUComponentImplementation gpu = (GPUComponentImplementation) component;
+                    if(gpu.getScreens().contains(screen)){
+                        computers.add(computer);
+                        break;
+                    }
+                }
+            }
+        }
+        return computers;
+    }
+
 
 }

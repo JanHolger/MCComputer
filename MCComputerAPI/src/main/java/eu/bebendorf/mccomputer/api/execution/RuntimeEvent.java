@@ -10,6 +10,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 public enum RuntimeEvent {
     SHUTDOWN("bios.shutdown"),
-    CLICK("bios.gpu.click");
+    CLICK("bios.gpu.click"),
+    CONSOLE_INPUT("bios.gpu.input");
     String value;
 }

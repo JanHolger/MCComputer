@@ -1,13 +1,14 @@
 package eu.bebendorf.mccomputer;
 
+import eu.bebendorf.mccomputer.api.Computer;
 import eu.bebendorf.mccomputer.api.ComputerAPI;
 import eu.bebendorf.mccomputer.api.ComputerAPIPlugin;
+import eu.bebendorf.mccomputer.api.ComputerComponent;
 import eu.bebendorf.mccomputer.command.ComputerCommand;
+import eu.bebendorf.mccomputer.components.GPUComponentImplementation;
 import eu.bebendorf.mccomputer.j2v8fix.V8Loader;
-import eu.bebendorf.mccomputer.listener.ComputerBlockListener;
-import eu.bebendorf.mccomputer.listener.ComputerGUIListener;
-import eu.bebendorf.mccomputer.listener.ComputerPlaceListener;
-import eu.bebendorf.mccomputer.listener.ScreenListener;
+import eu.bebendorf.mccomputer.listener.*;
+import eu.bebendorf.mcscreen.api.Screen;
 import eu.bebendorf.mcscreen.api.ScreenAPI;
 import lombok.Getter;
 import org.bukkit.Bukkit;
@@ -19,6 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MCComputer extends JavaPlugin implements ComputerAPIPlugin {
 
@@ -45,6 +47,7 @@ public class MCComputer extends JavaPlugin implements ComputerAPIPlugin {
         Bukkit.getPluginManager().registerEvents(new ComputerBlockListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ComputerPlaceListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ComputerGUIListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new ChatListener(this), this);
         ScreenAPI.getInstance().addListener(new ScreenListener(this));
         computerManager = new ComputerAPIImplementation(new File(getDataFolder(), "computer.json"));
     }

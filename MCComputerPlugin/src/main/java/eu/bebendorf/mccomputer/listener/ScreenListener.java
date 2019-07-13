@@ -36,7 +36,7 @@ public class ScreenListener implements eu.bebendorf.mcscreen.api.ScreenListener 
             }
             return;
         }
-        for(Computer computer : getComputers(screen)){
+        for(Computer computer : plugin.getComputerManager().getComputers(screen)){
             computer.event(RuntimeEvent.CLICK)
                     .param("screen", screen.getId())
                     .param("button", button.getValue())
@@ -61,19 +61,5 @@ public class ScreenListener implements eu.bebendorf.mcscreen.api.ScreenListener 
     public void onCreate(Screen screen) {
 
     }
-    private List<Computer> getComputers(Screen screen){
-        List<Computer> computers = new ArrayList<>();
-        for(Computer computer : MCComputer.getInstance().getComputerManager().getComputers()){
-            for(ComputerComponent component : computer.getComponents()){
-                if(component instanceof GPUComponentImplementation){
-                    GPUComponentImplementation gpu = (GPUComponentImplementation) component;
-                    if(gpu.getScreens().contains(screen)){
-                        computers.add(computer);
-                        break;
-                    }
-                }
-            }
-        }
-        return computers;
-    }
+
 }
